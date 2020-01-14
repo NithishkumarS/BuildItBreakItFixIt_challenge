@@ -4,7 +4,7 @@ import json
 import sys
 import socket
 from keywords import *
-
+from parse_program import *
 if len(sys.argv) != 3:
     print("usage: ./controller.py <test> <port>")
     exit(1)
@@ -47,6 +47,12 @@ class controller():
 
         for key in self.configuration['output_devices'].keys():
             self.devices[key] = int(self.configuration['output_devices'][key])
+
+    def generate_ouput(self):
+        status = parse_prog(self.text_input)  # parse_program()
+        print(status)
+        return status
+
 
 def main():
     host_ip = "localhost"
