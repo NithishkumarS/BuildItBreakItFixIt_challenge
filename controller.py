@@ -5,13 +5,22 @@ import sys
 import socket
 from keywords import *
 from parse_program import *
-if len(sys.argv) != 3:
+
+if len(sys.argv) < 3:
     print("usage: ./controller.py <test> <port>")
     exit(1)
 
 testFile = sys.argv[1]
 PORT = int(sys.argv[2])
+if len(sys.argv)>=4:
+    admin_password = sys.argv[3]
+else:
+    admin_password = b"admin"
 
+if len(sys.argv) ==5:
+    hub_password = sys.argv[4]
+else:
+    hub_password = b"hub_password"
 
 def read_test():
     f = open(testFile, 'r')
@@ -25,7 +34,10 @@ class controller():
         self.text_input = input
         # self.parse_input()
         # self.set_initial_states()
-
+        self.principals = {}
+        self.principals[b'admin'] = admin_password
+        self.principals[b'hub'] = hub_password
+        self.access = {}
     def get_input(self, _input):
         self.text_input = _input
 
@@ -48,8 +60,8 @@ class controller():
         for key in self.configuration['output_devices'].keys():
             self.devices[key] = int(self.configuration['output_devices'][key])
 
-    def generate_ouput(self):
-        status = parse_prog(self.text_input)  # parse_program()
+    def generate_ouput(self, obj):
+        status = parse_prog(self.text_input,obj )  # parse_program()
         print(status)
         return status
 
@@ -58,7 +70,7 @@ def main():
     host_ip = "localhost"
     wait = True
     obj = controller()
-
+ 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host_ip, PORT))
         s.listen()
@@ -70,9 +82,7 @@ def main():
                 _input = conn.recv(4096)
                 if _input:
                     obj.get_input(_input)
-                    print(_input)
-                    print('received')
-                    output = obj.generate_ouput().encode()
+                    output = obj.generate_ouput(obj).encode()
                 conn.sendall(output)
 
         print('connection terminated')
