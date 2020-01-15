@@ -3,15 +3,17 @@
 import json
 import sys
 import socket
+import signal
+import time
 from keywords import *
 from parse_program import *
 
 if len(sys.argv) < 3:
-    print("usage: ./controller.py <test> <port>")
+    print("usage: ./controller.py <port> <config>")
     exit(1)
 
-testFile = sys.argv[1]
-PORT = int(sys.argv[2])
+testFile = sys.argv[2]
+PORT = int(sys.argv[1])
 if len(sys.argv)>=4:
     admin_password = sys.argv[3]
 else:
@@ -64,6 +66,11 @@ class controller():
         print(status)
         return status
 
+def sigterm_handler(signal, frame):
+    # save the state here or do whatever you want
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, sigterm_handler)
 
 def main():
     host_ip = "localhost"
