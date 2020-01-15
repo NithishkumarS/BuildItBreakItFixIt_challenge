@@ -31,7 +31,6 @@ def parse_prog(program, controller):
     	return status
     
     for line in lines[1:]:
-        print(current_principal)
         print(line)
         '''
         # Regex match for if <cond> then <prim_cmd>
@@ -65,7 +64,6 @@ def parse_prog(program, controller):
             controller.access.setdefault(target,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub']})
             if delegator in controller.access[target][right]:
             	controller.access[target][right].append(delegatee)
-            	print(controller.access)
             else:
                 status += "{\"status\":\"DENIED_DELEGATION\"}\n"  # Update to match appropriate status
                 continue
@@ -89,17 +87,20 @@ def parse_prog(program, controller):
             status += "{\"status\":\"SET\"}\n"
             continue
         
-        match_return = re.match(b"^ *return +", line)
+        match_return = re.match(b"^ *return +", line)#([A-Za-z][A-Za-z0-9_]*) +. +", line)#([A-Za-z][A-Za-z0-9_]*) ", line)
         if match_return:
+            # expr = line.split(b"return")
+            # print(expr)
+            # val = compute_expression(expr[-1])
             var =  line.split(b" ")[-1]
             val = values[var][-1].decode("utf-8") 
-           
+            # val = 1
             status += "{\"status\":\"RETURNING\",\"output\":" +str(val)+"}\n"
             continue
         '''
         #### Add additional checks for the rest of the grammar ###
-        match_return = re.match(b"^ *print +", line)
-        if match_return:
+        match_print = re.match(b"^ *print +", line)
+        if match_print:
             var =  line.split(b" ")[-1]
             # Add code to handle rule here
             # res= values[var][0]
