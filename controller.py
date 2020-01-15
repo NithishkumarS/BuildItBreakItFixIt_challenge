@@ -22,8 +22,8 @@ if len(sys.argv) ==5:
 else:
     hub_password = b"hub_password"
 
-def read_test():
-    f = open(testFile, 'r')
+def read_test(file=testFile):
+    f = open(file, 'r')
     test = json.loads(f.read())
     f.close()
     return test
@@ -32,8 +32,7 @@ def read_test():
 class controller():
     def __init__(self, input=1):
         self.text_input = input
-        # self.parse_input()
-        # self.set_initial_states()
+        self.set_initial_states()
         self.principals = {}
         self.principals[b'admin'] = admin_password
         self.principals[b'hub'] = hub_password
@@ -44,17 +43,17 @@ class controller():
     def parse_input(self):
         self.arguements = self.text_input[keys[0]]
         self.programs = self.text_input[keys[1]]
-        self.configuration = self.text_input[keys[2]]
+        # 
 
     def num_of_test_cases(self):
         return len(self.programs)
 
     def set_initial_states(self):
+        self.configuration = read_test('config.json')
         self.sensors = {}
         self.devices = {}
         # print(self.configuration['sensors']['owner_location']\)
         for key in self.configuration['sensors'].keys():
-            print('key:', key)
             self.sensors[key] = int(self.configuration['sensors'][key])
 
         for key in self.configuration['output_devices'].keys():
