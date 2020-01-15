@@ -19,6 +19,8 @@ def parse_prog(program, controller):
         if controller.principals[principal] != password:
         	status = "{\"status\":\"FAILED\"}\n"
         	return status
+        else:
+        	current_principal = principal
     else:
         status = "{\"status\":\"FAILED\"}\n"
         return status
@@ -75,11 +77,14 @@ def parse_prog(program, controller):
         if match_set:
             var = match_set.groups()[0]
             expr = line.split(b"= ")[-1]   
-            if current_principal in controller.access[target]['write']:
-            	values.setdefault(var, []).append(expr) 
+            if current_principal == b'admin':
+            	values.setdefault(var, []).append(expr)
+            	controller.access.setdefault(var,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub']})
+            elif current_principal in controller.access[var][b'write']: 
+            	values.setdefault(var, []).append(expr)
             else:
             	status = "{\"status\":\"DENIED_WRITE\"}\n"
-                return status
+            	return status
 
             status += "{\"status\":\"SET\"}\n"
             continue
@@ -109,7 +114,7 @@ def parse_prog(program, controller):
             principal = match_create_principal.groups()[0]
             password = match_create_principal.groups()[1]
             controller.principals[principal] = password
-
+      
             status += "{\"status\":\"CREATE_PRINCIPAL\"}\n"
             continue
         #### Add additional checks for the rest of the grammar ####
