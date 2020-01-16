@@ -124,7 +124,9 @@ def parse_prog(program, controller):
                 except KeyError:
                         status = "{\"status\":\"FAILED\"}\n"
                         return status
-
+            print('access::::::',controller.access)
+            import pdb
+            pdb.set_trace()
             # val = 1
             status += "{\"status\":\"RETURNING\",\"output\":" +str(val)+"}\n"
             continue
@@ -172,9 +174,7 @@ def parse_prog(program, controller):
             rule = match_activate.groups()[0]
             (condition, command) = controller.rules[rule]
             condition_eval = controller.evaluate_expressions(current_principal, condition)
-            if condition_eval ==2:
-                status = "{\"status\":\"DENIED_READ\"}\n"
-                return status
+                
             
             if condition_eval ==1 :
                 status, command_exec = set(command, status)
@@ -185,10 +185,17 @@ def parse_prog(program, controller):
                     if val_set == 1:
                         return status
                     elif val_set ==0:
-                        status -= "{\"status\":\"SET\"}\n"                      
+                        status -= "{\"status\":\"SET\"}\n"
 
                 status += "{\"status\":\"ACTIVATE_RULE\"}\n"
-                continue
+            elif condition_eval ==0 :
+                status = "{\"status\":\"FAILED\"}\n"
+
+
+            if condition_eval ==2:
+                status += "{\"status\":\""+rule.decode("utf-8")+"\" ,\"status\":\"DENIED_READ\"}\n"
+            
+            continue
         '''
         match_deactivate = re.match(b"^ *deactivate +rule +([A-Za-z][A-Za-z0-9_]*)", line)
         if match_deactivate:

@@ -41,6 +41,7 @@ class controller():
         self.values=dict()
         self.set_initial_states()
         self.local_value = {}
+        self.default_delegator = None
 
     def get_input(self, _input):
         self.text_input = _input
@@ -60,11 +61,13 @@ class controller():
         for key in self.configuration['sensors'].keys():
             self.values.setdefault(key.encode(),[])
             self.values[key.encode()].append(self.configuration['sensors'][key].encode())
+            self.access.setdefault(key.encode(),{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub'],b'delegate':[b'admin', b'hub']})
             self.sensors[key.encode()] = self.configuration['sensors'][key].encode()
     
         for key in self.configuration['output_devices'].keys():
             self.values.setdefault(key.encode(),[])
             self.values[key.encode()].append(self.configuration['output_devices'][key].encode())
+            self.access.setdefault(key.encode(),{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub'],b'delegate':[b'admin', b'hub']})
             self.devices[key.encode()] = self.configuration['output_devices'][key].encode()
 
     def generate_ouput(self, obj):
