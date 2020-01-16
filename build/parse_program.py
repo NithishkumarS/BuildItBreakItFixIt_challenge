@@ -1,6 +1,6 @@
 import re
 
-values=dict()
+
 def parse_prog(program, controller):
     # program = controller
     # program = controller.text_input
@@ -15,7 +15,7 @@ def parse_prog(program, controller):
         principal = match.groups()[0]
         password = match.groups()[1]
         # print(principal, password)
-        # print('source::',controller.principals)
+        print('source::',controller.principals)
         if controller.principals[principal] != password:
         	status = "{\"status\":\"FAILED\"}\n"
         	return status
@@ -50,9 +50,8 @@ def parse_prog(program, controller):
             # print('command',command)
             condition = match_if.groups()[1]
             # set_command = command.split(b"set ")[-1]
-            # print('set_command', set_command)
             controller.rules[rule] = (condition, command)
-            print('rules:', controller.rules)
+            # print('rules:', controller.rules)
     
             status += "{\"status\":\"SET_RULE\"}\n"  # Update to match appropriate status
             continue
@@ -76,21 +75,31 @@ def parse_prog(program, controller):
             status += "{\"status\":\"SET_DELEGATION\"}\n"  # Update to match appropriate status
             continue
         
-        match_set = re.match(b"^ *set +([A-Za-z][A-Za-z0-9_]*) = +", line)
-        if match_set:
-            var = match_set.groups()[0]
-            expr = line.split(b"= ")[-1]   
-            if current_principal == b'admin':
-            	values.setdefault(var, []).append(expr)
-            	controller.access.setdefault(var,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub']})
-            elif current_principal in controller.access[var][b'write']: 
-            	values.setdefault(var, []).append(expr)
-            else:
-            	status = "{\"status\":\"DENIED_WRITE\"}\n"
-            	return status
+        def set(line,status):
+            match_set = re.match(b"^ *set +([A-Za-z][A-Za-z0-9_]*) = +", line)
+            if match_set:
+                var = match_set.groups()[0]
+                expr = line.split(b"= ")[-1]
+                if current_principal == b'admin' orcurrent_principal == b'hub':
+                	controller.values.setdefault(var, []).append(expr)
+                	controller.access.setdefault(var,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub']})
+                elif current_principal in controller.access[var][b'write']: 
+                	controller.values.setdefault(var, []).append(expr)
+                else:
+                	status = "{\"status\":\"DENIED_WRITE\"}\n"
+                	return status, 1
 
-            status += "{\"status\":\"SET\"}\n"
-            continue
+                status += "{\"status\":\"SET\"}\n"
+                return status, 0
+            return status, 2
+        status, val_set = set(line,status)
+        
+        if val_set !=2:
+
+            if val_set == 1:
+                return status
+            elif val_set ==0:
+                continue
         
         match_return = re.match(b"^ *return +", line)#([A-Za-z][A-Za-z0-9_]*) +. +", line)#([A-Za-z][A-Za-z0-9_]*) ", line)
         if match_return:
@@ -101,7 +110,7 @@ def parse_prog(program, controller):
             if var.isdigit():
                 val = int(var)
             else:
-                val = values[var][-1].decode("utf-8") 
+                val = controller.values[var][-1].decode("utf-8") 
             # val = 1
             status += "{\"status\":\"RETURNING\",\"output\":" +str(val)+"}\n"
             continue
@@ -127,23 +136,31 @@ def parse_prog(program, controller):
             status += "{\"status\":\"CREATE_PRINCIPAL\"}\n"
             continue
        
-        '''
+        
         match_activate = re.match(b"^ *activate +rule +([A-Za-z][A-Za-z0-9_]*)", line)
         if match_activate:
-	        rule = match_activate.groups()[0]
+            rule = match_activate.groups()[0]
             (condition, command) = controller.rules[rule]
-	        if current_principal == b'admin':
-                values.setdefault(var, []).append(expr)
-                controller.access.setdefault(var,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub']})
-            elif current_principal in controller.access[var][b'write']: 
-                values.setdefault(var, []).append(expr)
-            else:
-                status = "{\"status\":\"DENIED_WRITE\"}\n"
+            condition_eval = controller.evaluate_expressions(current_principal, condition)
+            if condition_eval ==2:
+                status = "{\"status\":\"DENIED_READ\"}\n"
                 return status
+            
+            if condition_eval ==1 :
+                print('accepted::::', command)
+                status, command_exec = set(command, status)
+                status, val_set = set(line,status)
+                
+                if val_set !=2:
 
-	        status += "{\"status\":\"ACTIVATE_RULE\"}\n"
-	        continue
-        
+                    if val_set == 1:
+                        return status
+                    elif val_set ==0:
+                        status -= "{\"status\":\"SET\"}\n"                      
+
+                status += "{\"status\":\"ACTIVATE_RULE\"}\n"
+                continue
+        '''
         match_deactivate = re.match(b"^ *deactivate +rule +([A-Za-z][A-Za-z0-9_]*)", line)
         if match_deactivate:
 	        rule = match_deactivate.groups()[0]
@@ -205,13 +222,3 @@ def parse_prog(program, controller):
 # print(status)
 
 
-def evaluate_expressions(expr):
-    variable = expr.split(b" ")[0]
-    operation = expr.split(b" ")[1]
-    target = expr.split(b" ")[2]
-    print(variable,'::::::', operation, '::::::', target)
-    
-    print('expressions....return bool')
-
-def set_values(current_principal, expr):
-    print('check if principal has access and set the value')

@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 import json
 import sys
 import socket
@@ -22,7 +21,7 @@ else:
 if len(sys.argv) ==5:
     hub_password = sys.argv[4]
 else:
-    hub_password = b"hub_password"
+    hub_password = b"hub"
 
 def read_test(file=testFile):
     f = open(file, 'r')
@@ -34,18 +33,20 @@ def read_test(file=testFile):
 class controller():
     def __init__(self, input=1):
         self.text_input = input
-        self.set_initial_states()
         self.principals = {}
         self.principals[b'admin'] = admin_password
         self.principals[b'hub'] = hub_password
         self.access = {}
+        self.rules = {}
+        self.values=dict()
+        self.set_initial_states()
+        
     def get_input(self, _input):
         self.text_input = _input
 
     def parse_input(self):
         self.arguements = self.text_input[keys[0]]
         self.programs = self.text_input[keys[1]]
-        # 
 
     def num_of_test_cases(self):
         return len(self.programs)
@@ -56,15 +57,34 @@ class controller():
         self.devices = {}
         # print(self.configuration['sensors']['owner_location']\)
         for key in self.configuration['sensors'].keys():
-            self.sensors[key] = int(self.configuration['sensors'][key])
-
+            print('key:', key)
+            self.values.setdefault(key.encode(),[])
+            self.values[key.encode()].append(self.configuration['sensors'][key].encode())
+            self.sensors[key.encode()] = self.configuration['sensors'][key].encode()
+    
         for key in self.configuration['output_devices'].keys():
-            self.devices[key] = int(self.configuration['output_devices'][key])
+            self.values.setdefault(key.encode(),[])
+            self.values[key.encode()].append(self.configuration['output_devices'][key].encode())
+            self.devices[key.encode()] = self.configuration['output_devices'][key].encode()
 
     def generate_ouput(self, obj):
         status = parse_prog(self.text_input,obj )  # parse_program()
         print(status)
         return status
+
+
+    def evaluate_expressions(self,current_principal, expr):
+        variable = expr.split(b" ")[0]
+        operation = expr.split(b" ")[1]
+        target = expr.split(b" ")[2]
+        print(expr)
+        if current_principal in self.access[variable][b'read']:
+
+             val = self.values[variable][-1].decode("utf-8")
+             output = eval(str(val).encode()+operation+target)
+             return int(output)
+        else:
+            return 2
 
 def sigterm_handler(signal, frame):
     # save the state here or do whatever you want
