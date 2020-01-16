@@ -181,19 +181,21 @@ def parse_prog(program, controller):
 	        
 	        status += "{\"status\":\"DEACTIVATE_RULE\"}\n"
 	        continue
- 
+        '''
         match_change_password = re.match(b"^ *change +password +([A-Za-z][A-Za-z0-9_]*) +([A-Za-z0-9_ ,;\.?!-]*)", line)
         if match_change_password:
             principal = match_change_password.groups()[0]
             password = match_change_password.groups()[1]
-
-            # Add code to handle rule here
-            
-            print(principal, password)
+            if principal in controller.access:
+                if current_principal == principal or current_principal ==b'admin':
+                    controller.access[principal] = password
+                else:
+                    status = "{\"status\":\"DENIED_WRITE\"}\n"
+                    return status
             status += "{\"status\":\"CHANGE_PASSWORD\"}\n"
             continue
-        #### Add additional checks for the rest of the grammar ####
         
+        '''
         match_delete_del = re.match(
             b"^ *delete +delegation +([A-Za-z][A-Za-z0-9_]*) +([A-Za-z][A-Za-z0-9_]*) +(read|write|delegate|toggle) +-> +([A-Za-z][A-Za-z0-9_]*)$",
             line)
