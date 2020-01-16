@@ -40,7 +40,8 @@ class controller():
         self.rules = {}
         self.values=dict()
         self.set_initial_states()
-        
+        self.local_value = {}
+
     def get_input(self, _input):
         self.text_input = _input
 
@@ -57,7 +58,6 @@ class controller():
         self.devices = {}
         # print(self.configuration['sensors']['owner_location']\)
         for key in self.configuration['sensors'].keys():
-            print('key:', key)
             self.values.setdefault(key.encode(),[])
             self.values[key.encode()].append(self.configuration['sensors'][key].encode())
             self.sensors[key.encode()] = self.configuration['sensors'][key].encode()
@@ -74,17 +74,45 @@ class controller():
 
 
     def evaluate_expressions(self,current_principal, expr):
-        variable = expr.split(b" ")[0]
-        operation = expr.split(b" ")[1]
-        target = expr.split(b" ")[2]
-        print(expr)
-        if current_principal in self.access[variable][b'read']:
+            variable = expr.split(b" ")[0]
+            operation = expr.split(b" ")[1]
+            target = expr.split(b" ")[2]
+            print(expr)
+            print(variable)
+            
+            if current_principal in self.access[variable][b'read']:
 
-             val = self.values[variable][-1].decode("utf-8")
-             output = eval(str(val).encode()+operation+target)
-             return int(output)
+                 val = self.values[variable][-1].decode("utf-8")
+                 print('len:', len(self.values[variable]))
+                 output = eval(str(val).encode()+operation+target)
+                 return int(output)
+            else:
+                return 2
+            
+
+    def solve_expressions(self,current_principal, expr):
+        print('expr:::',expr)
+        if len(expr) ==1:
+                try:
+
+                    if not expr.isdigit():
+                       print('inside not digit')
+                       if current_principal in self.access[expr][b'read']:
+                          print('val:::::::::', self.values[expr])
+                          return self.values[expr][-1]
+                    else:
+                        return expr
+                except KeyError:
+                   print('inside except')
+                   print(self.local_value)
+                   if expr in self.local_value:
+                        print('inside except local value')
+                        return self.local_value[expr]
+                    
+
+                
         else:
-            return 2
+            return expr
 
 def sigterm_handler(signal, frame):
     # save the state here or do whatever you want

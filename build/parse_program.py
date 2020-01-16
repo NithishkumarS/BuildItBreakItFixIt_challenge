@@ -15,7 +15,7 @@ def parse_prog(program, controller):
         principal = match.groups()[0]
         password = match.groups()[1]
         # print(principal, password)
-        print('source::',controller.principals)
+        # print('source::',controller.principals)
         if controller.principals[principal] != password:
         	status = "{\"status\":\"FAILED\"}\n"
         	return status
@@ -77,18 +77,20 @@ def parse_prog(program, controller):
         
         def set(line,status):
             match_set = re.match(b"^ *set +([A-Za-z][A-Za-z0-9_]*) = +", line)
+            
             if match_set:
                 var = match_set.groups()[0]
                 expr = line.split(b"= ")[-1]
                 if current_principal == b'admin' or current_principal == b'hub':
-                	controller.values.setdefault(var, []).append(expr)
+                	controller.values.setdefault(var, []).append(controller.solve_expressions(current_principal,expr))
+
                 	controller.access.setdefault(var,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub']})
                 elif current_principal in controller.access[var][b'write']: 
-                	controller.values.setdefault(var, []).append(expr)
+                	controller.values.setdefault(var, []).append(controller.solve_expressions(current_principal,expr))
                 else:
                 	status = "{\"status\":\"DENIED_WRITE\"}\n"
                 	return status, 1
-
+            
                 status += "{\"status\":\"SET\"}\n"
                 return status, 0
             return status, 2
@@ -110,7 +112,18 @@ def parse_prog(program, controller):
             if var.isdigit():
                 val = int(var)
             else:
-                val = controller.values[var][-1].decode("utf-8") 
+                try:
+                    print('local:::::::::', controller.local_value,var in controller.values, var in controller.local_value)
+                    if var in controller.values and var in controller.local_value:
+                        status = "{\"status\":\"FAILED\"}\n"
+                        return status
+                    print(controller.values)
+                    val = controller.values[var][-1].decode("utf-8") 
+                    
+                except KeyError:
+                        status = "{\"status\":\"FAILED\"}\n"
+                        return status
+
             # val = 1
             status += "{\"status\":\"RETURNING\",\"output\":" +str(val)+"}\n"
             continue
@@ -147,7 +160,6 @@ def parse_prog(program, controller):
                 return status
             
             if condition_eval ==1 :
-                print('accepted::::', command)
                 status, command_exec = set(command, status)
                 status, val_set = set(line,status)
                 
@@ -209,13 +221,16 @@ def parse_prog(program, controller):
         if match_local:
             conditional = match_local.groups()[0]
             expr = line.split(b"= ")[-1]
-
+            controller.local_value[conditional.split(b" ")[0]] = expr
             # Add code to handle rule here
             status += "{\"status\":\"LOCAL\"}\n"  # Update to match appropriate status
+            print(status)
             continue
-
+    if controller.local_value:
+       controller.local_value={}
         
     return status
+        
 
 # status = parse_prog(
 #     "as principal admin password \"admin\" do\nif temperature = 80 then set ac = 1\nset x = 1\nset delegation x admin read -> bob\n***\n")
