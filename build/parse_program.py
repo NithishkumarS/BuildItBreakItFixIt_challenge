@@ -53,7 +53,7 @@ def parse_prog(program, controller):
             controller.rules[rule] = (condition, command)
             # print('rules:', controller.rules)
     
-            status += "{\"status\":\"SET_RULE\"}\n"  # Update to match appropriate status
+            status += "{\"status\":\"SET_RULE\",\"rule\": \""+rule.decode("utf-8")+"\"}\n"  # Update to match appropriate status
             continue
         
         match_set_del = re.match(
@@ -80,7 +80,7 @@ def parse_prog(program, controller):
             if match_set:
                 var = match_set.groups()[0]
                 expr = line.split(b"= ")[-1]
-                if current_principal == b'admin' orcurrent_principal == b'hub':
+                if current_principal == b'admin' or current_principal == b'hub':
                 	controller.values.setdefault(var, []).append(expr)
                 	controller.access.setdefault(var,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub']})
                 elif current_principal in controller.access[var][b'write']: 
