@@ -5,6 +5,7 @@ def parse_prog(program, controller):
     # program = controller
     # program = controller.text_input
     lines = program.split(b'\n')
+
     # print('length of lines::::::::::', len(lines))
     principal = ""
     status = ""
@@ -31,7 +32,9 @@ def parse_prog(program, controller):
     	return status
     
     for line in lines[1:]:
-
+        val = line.split(b"//")
+        print('val:::::::::::::::::::',val)
+        line=val[0]
         print(line)
         # print(type(line))
         print('len::::::::::::::::::::::::::::',len(line))
@@ -207,7 +210,7 @@ def parse_prog(program, controller):
         
         
         match_delete_del = re.match(
-            b"^ *delete +delegation +([A-Za-z][A-Za-z0-9_]*) +([A-Za-z][A-Za-z0-9_]*) +(read|write|delegate|toggle) +-> +([A-Za-z][A-Za-z0-9_]*) +",
+            b"^ *delete +delegation +([A-Za-z][A-Za-z0-9_]*) +([A-Za-z][A-Za-z0-9_]*) +(read|write|delegate|toggle) +-> +([A-Za-z][A-Za-z0-9_]*)",
             line)
         if match_delete_del:
             target = match_delete_del.groups()[0]
