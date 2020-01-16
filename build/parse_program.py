@@ -31,7 +31,13 @@ def parse_prog(program, controller):
     	return status
     
     for line in lines[1:]:
+
         print(line)
+        # print(type(line))
+        print('len::::::::::::::::::::::::::::',len(line))
+        # import pdb
+        # pdb.set_trace()
+
         '''
         # Regex match for if <cond> then <prim_cmd>
         match_if = re.match(b"^ *if +([A-Za-z][A-Za-z0-9_]* +[=|>|<]+ +[A-Za-z0-9][A-Za-z0-9_]*) +then +", line)
@@ -65,7 +71,7 @@ def parse_prog(program, controller):
             right = match_set_del.groups()[2]
             delegatee = match_set_del.groups()[3]
 
-            controller.access.setdefault(target,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub']})
+            controller.access.setdefault(target,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub'],b'delegate':[b'admin', b'hub']})
             if delegator in controller.access[target][right]:
             	controller.access[target][right].append(delegatee)
             else:
@@ -84,7 +90,7 @@ def parse_prog(program, controller):
                 if current_principal == b'admin' or current_principal == b'hub':
                 	controller.values.setdefault(var, []).append(controller.solve_expressions(current_principal,expr))
 
-                	controller.access.setdefault(var,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub']})
+                	controller.access.setdefault(var,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub'],b'delegate':[b'admin', b'hub']})
                 elif current_principal in controller.access[var][b'write']: 
                 	controller.values.setdefault(var, []).append(controller.solve_expressions(current_principal,expr))
                 else:
@@ -199,9 +205,9 @@ def parse_prog(program, controller):
             status += "{\"status\":\"CHANGE_PASSWORD\"}\n"
             continue
         
-        '''
+        
         match_delete_del = re.match(
-            b"^ *delete +delegation +([A-Za-z][A-Za-z0-9_]*) +([A-Za-z][A-Za-z0-9_]*) +(read|write|delegate|toggle) +-> +([A-Za-z][A-Za-z0-9_]*)$",
+            b"^ *delete +delegation +([A-Za-z][A-Za-z0-9_]*) +([A-Za-z][A-Za-z0-9_]*) +(read|write|delegate|toggle) +-> +([A-Za-z][A-Za-z0-9_]*) +",
             line)
         if match_delete_del:
             target = match_delete_del.groups()[0]
@@ -209,11 +215,16 @@ def parse_prog(program, controller):
             right = match_delete_del.groups()[2]
             delegatee = match_delete_del.groups()[3]
 
-            # Add code to handle rule here
+            if delegator in controller.access[target][right]:
+                controller.access[target][right].remove(delegatee)
+            else:
+                status += "{\"status\":\"DENIED_DELEGATION\"}\n"  # Update to match appropriate status
+                continue
+            
 
             status += "{\"status\":\"DELETE_DELEGATION\"}\n"  # Update to match appropriate status
             continue
-        
+        '''
         match_default_delegator = re.match(b"^ *default +delegator = +([A-Za-z][A-Za-z0-9_]*)", line)
         if match_default_delegator:
             default = match_default_delegator.groups()[0]
@@ -235,10 +246,5 @@ def parse_prog(program, controller):
        controller.local_value={}
         
     return status
-        
-
-# status = parse_prog(
-#     "as principal admin password \"admin\" do\nif temperature = 80 then set ac = 1\nset x = 1\nset delegation x admin read -> bob\n***\n")
-# print(status)
 
 
