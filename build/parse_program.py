@@ -5,7 +5,7 @@ def parse_prog(program, controller):
     # program = controller
     # program = controller.text_input
     lines = program.split(b'\n')
-    print('length of lines::::::::::', len(lines))
+    # print('length of lines::::::::::', len(lines))
     principal = ""
     status = ""
     # Check if the first line of the program defines the current principal
@@ -14,8 +14,8 @@ def parse_prog(program, controller):
     if match:
         principal = match.groups()[0]
         password = match.groups()[1]
-        print(principal, password)
-        print('source::',controller.principals)
+        # print(principal, password)
+        # print('source::',controller.principals)
         if controller.principals[principal] != password:
         	status = "{\"status\":\"FAILED\"}\n"
         	return status
@@ -42,16 +42,21 @@ def parse_prog(program, controller):
             # Add code to handle rule here
             status += "{\"status\":\"COND_NOT_TAKEN\"}\n"  # Update to match appropriate status
             continue
-
-        match_if = re.match(b"^ *set +rule +([A-Za-z0-9][A-Za-z0-9_]*) = +if +([A-Za-z][A-Za-z0-9_]* +[=|>|<]+ +[A-Za-z0-9][A-Za-z0-9_]*) +then +", line)
-        if match_if:
-            conditional = match_if.groups()[0]
-            command = line.split("then ")[-1]
-
-            # Add code to handle rule here
-            status += "{\"status\":\"COND_NOT_TAKEN\"}\n"  # Update to match appropriate status
-            continue
         '''
+        match_if = re.match(b"^ *set +rule +([A-Za-z0-9][A-Za-z0-9_]*) = +if +([A-Za-z][A-Za-z0-9_]* +[=|>|<]+ +[A-Za-z0-9][A-Za-z0-9_]*) +then +set +", line)
+        if match_if:
+            rule = match_if.groups()[0]
+            command = line.split(b"then ")[-1]
+            # print('command',command)
+            condition = match_if.groups()[1]
+            # set_command = command.split(b"set ")[-1]
+            # print('set_command', set_command)
+            controller.rules[rule] = (condition, command)
+            print('rules:', controller.rules)
+    
+            status += "{\"status\":\"SET_RULE\"}\n"  # Update to match appropriate status
+            continue
+        
         match_set_del = re.match(
             b"^ *set +delegation +([A-Za-z][A-Za-z0-9_]*) +([A-Za-z][A-Za-z0-9_]*) +(read|write|delegate|toggle) +-> +([A-Za-z][A-Za-z0-9_]*)$",
             line)
@@ -93,7 +98,10 @@ def parse_prog(program, controller):
             # print(expr)
             # val = compute_expression(expr[-1])
             var =  line.split(b" ")[-1]
-            val = values[var][-1].decode("utf-8") 
+            if var.isdigit():
+                val = int(var)
+            else:
+                val = values[var][-1].decode("utf-8") 
             # val = 1
             status += "{\"status\":\"RETURNING\",\"output\":" +str(val)+"}\n"
             continue
@@ -118,14 +126,21 @@ def parse_prog(program, controller):
       
             status += "{\"status\":\"CREATE_PRINCIPAL\"}\n"
             continue
-        #### Add additional checks for the rest of the grammar ####
+       
         '''
         match_activate = re.match(b"^ *activate +rule +([A-Za-z][A-Za-z0-9_]*)", line)
         if match_activate:
 	        rule = match_activate.groups()[0]
-	        
-	        # Add code to handle rule here
-	        
+            (condition, command) = controller.rules[rule]
+	        if current_principal == b'admin':
+                values.setdefault(var, []).append(expr)
+                controller.access.setdefault(var,{b'read':[b'admin', b'hub'], b'write':[b'admin', b'hub']})
+            elif current_principal in controller.access[var][b'write']: 
+                values.setdefault(var, []).append(expr)
+            else:
+                status = "{\"status\":\"DENIED_WRITE\"}\n"
+                return status
+
 	        status += "{\"status\":\"ACTIVATE_RULE\"}\n"
 	        continue
         
@@ -172,19 +187,31 @@ def parse_prog(program, controller):
 
             status += "{\"status\":\"DEFAULT_DELEGATOR\"}\n"
             continue
-        
-        match_local = re.match(b"^ *local +([A-Za-z][A-Za-z0-9_]* +[=|>|<]+ +[A-Za-z0-9][A-Za-z0-9_]*)", line)
-        if match_if:
-            conditional = match_if.groups()[0]
-            command = line.split("then ")[-1]
+        '''
+        match_local = re.match(b"^ *local +([A-Za-z][A-Za-z0-9_]* +[=]+ +[A-Za-z0-9][A-Za-z0-9_]*)", line)
+        if match_local:
+            conditional = match_local.groups()[0]
+            expr = line.split(b"= ")[-1]
 
             # Add code to handle rule here
-            status += "{\"status\":\"COND_NOT_TAKEN\"}\n"  # Update to match appropriate status
+            status += "{\"status\":\"LOCAL\"}\n"  # Update to match appropriate status
             continue
 
-        '''
+        
     return status
 
 # status = parse_prog(
 #     "as principal admin password \"admin\" do\nif temperature = 80 then set ac = 1\nset x = 1\nset delegation x admin read -> bob\n***\n")
 # print(status)
+
+
+def evaluate_expressions(expr):
+    variable = expr.split(b" ")[0]
+    operation = expr.split(b" ")[1]
+    target = expr.split(b" ")[2]
+    print(variable,'::::::', operation, '::::::', target)
+    
+    print('expressions....return bool')
+
+def set_values(current_principal, expr):
+    print('check if principal has access and set the value')
