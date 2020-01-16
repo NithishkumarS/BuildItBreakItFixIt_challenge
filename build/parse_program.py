@@ -32,14 +32,7 @@ def parse_prog(program, controller):
     	return status
     
     for line in lines[1:]:
-        val = line.split(b"//")
-        print('val:::::::::::::::::::',val)
-        line=val[0]
-        print(line)
-        # print(type(line))
-        print('len::::::::::::::::::::::::::::',len(line))
-        # import pdb
-        # pdb.set_trace()
+        line=line.split(b"//")[0]
 
         '''
         # Regex match for if <cond> then <prim_cmd>
@@ -227,16 +220,24 @@ def parse_prog(program, controller):
 
             status += "{\"status\":\"DELETE_DELEGATION\"}\n"  # Update to match appropriate status
             continue
-        '''
+        
         match_default_delegator = re.match(b"^ *default +delegator = +([A-Za-z][A-Za-z0-9_]*)", line)
         if match_default_delegator:
             default = match_default_delegator.groups()[0]
             print('val:', default)    
-            # Add code to handle rule here
-
+            if current_principal == b'admin':
+                if default in controller.principals:
+                    controller.default_delegator = default
+                else:
+                    status = "{\"status\":\"FAILED\"}\n"
+                    return status
+            else:
+                status = "{\"status\":\"DENIED_WRITE\"}\n"
+                return status
+    
             status += "{\"status\":\"DEFAULT_DELEGATOR\"}\n"
             continue
-        '''
+        
         match_local = re.match(b"^ *local +([A-Za-z][A-Za-z0-9_]* +[=]+ +[A-Za-z0-9][A-Za-z0-9_]*)", line)
         if match_local:
             conditional = match_local.groups()[0]
