@@ -111,7 +111,6 @@ def parse_prog(program, controller):
             # print(expr)
             # val = compute_expression(expr[-1])
             var =  line.split(b" ")[-1]
-            print('var::::::::::::::::::::::::::::::::', var)
             if var.isdigit():
                 val = int(var)
             else:
@@ -146,8 +145,24 @@ def parse_prog(program, controller):
         if match_create_principal:
             principal = match_create_principal.groups()[0]
             password = match_create_principal.groups()[1]
-            controller.principals[principal] = password
-      
+            if current_principal == b'admin':
+                if not principal in controller.principals:
+                    controller.principals[principal] = password
+                else:
+                    status = "{\"status\":\"FAILED\"}\n"
+                    return status
+            else:
+                status = "{\"status\":\"DENIED_WRITE\"}\n"
+                return status
+    
+            if controller.default_delegator:
+                for key in controller.access.keys():
+                    for right in controller.access[key]:
+                        for ele in controller.access[key][right]:
+                            if ele == controller.default_delegator:
+                                controller.access[key][right].append(principal)
+                                break
+
             status += "{\"status\":\"CREATE_PRINCIPAL\"}\n"
             continue
        
