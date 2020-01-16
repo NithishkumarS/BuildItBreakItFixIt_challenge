@@ -109,11 +109,11 @@ def parse_prog(program, controller):
             # print(expr)
             # val = compute_expression(expr[-1])
             var =  line.split(b" ")[-1]
+            print('var::::::::::::::::::::::::::::::::', var)
             if var.isdigit():
                 val = int(var)
             else:
                 try:
-                    print('local:::::::::', controller.local_value,var in controller.values, var in controller.local_value)
                     if var in controller.values and var in controller.local_value:
                         status = "{\"status\":\"FAILED\"}\n"
                         return status
@@ -182,16 +182,20 @@ def parse_prog(program, controller):
 	        status += "{\"status\":\"DEACTIVATE_RULE\"}\n"
 	        continue
         '''
-        match_change_password = re.match(b"^ *change +password +([A-Za-z][A-Za-z0-9_]*) +([A-Za-z0-9_ ,;\.?!-]*)", line)
+        match_change_password = re.match(b"^ *change +password +([A-Za-z][A-Za-z0-9_]*) +\"([A-Za-z0-9_ ,;\.?!-]*)\"", line)
         if match_change_password:
             principal = match_change_password.groups()[0]
             password = match_change_password.groups()[1]
-            if principal in controller.access:
+            if principal in controller.principals:
                 if current_principal == principal or current_principal ==b'admin':
-                    controller.access[principal] = password
+                    controller.principals[principal] = password
                 else:
                     status = "{\"status\":\"DENIED_WRITE\"}\n"
                     return status
+            else:
+                status = "{\"status\":\"FAILED\"}\n"
+                return status
+
             status += "{\"status\":\"CHANGE_PASSWORD\"}\n"
             continue
         
@@ -226,7 +230,6 @@ def parse_prog(program, controller):
             controller.local_value[conditional.split(b" ")[0]] = expr
             # Add code to handle rule here
             status += "{\"status\":\"LOCAL\"}\n"  # Update to match appropriate status
-            print(status)
             continue
     if controller.local_value:
        controller.local_value={}
