@@ -1,0 +1,26 @@
+Description of issue:
+
+Tests if a incorrect code crashes.
+
+
+How was the break found:
+
+Basic tests
+
+
+
+Is it a fixed version of a failed break:
+
+No.
+
+
+How hard was the break to find:
+
+1.
+
+
+How hard was the break to exploit:
+
+1.
+
+
