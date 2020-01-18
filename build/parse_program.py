@@ -123,10 +123,6 @@ def parse_prog(program, controller):
                     except KeyError:
                             status = "{\"status\":\"FAILED\"}\n"
                             return status
-                print('access::::::',controller.access)
-                import pdb
-                pdb.set_trace()
-                # val = 1
                 status += "{\"status\":\"RETURNING\",\"output\":" +str(val)+"}\n"
                 continue
             
@@ -145,6 +141,7 @@ def parse_prog(program, controller):
                 principal = match_create_principal.groups()[0]
                 password = match_create_principal.groups()[1]
                 if current_principal == b'admin':
+                    print('here')
                     if not principal in controller.principals:
                         controller.principals[principal] = password
                     else:
@@ -155,6 +152,7 @@ def parse_prog(program, controller):
                     return status
         
                 if controller.default_delegator:
+                    print('inside default delegator')
                     for key in controller.access.keys():
                         for right in controller.access[key]:
                             for ele in controller.access[key][right]:
@@ -268,6 +266,7 @@ def parse_prog(program, controller):
         if controller.local_value:
            controller.local_value={}
     except:
+        print('except')
         status = "{\"status\":\"FAILED\"}\n"
                         
     return status
