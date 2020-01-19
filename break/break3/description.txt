@@ -1,0 +1,6 @@
+Admin creates bob and assigns it read access of variable x to bob. Once access is assigned, bob deletes read access of admin.
+This shouldn't be allowed and output should be DENIED_WRITE.
+
+This was inspired from one of the breaks in my code.
+
+Pretty straightforward to locate.
