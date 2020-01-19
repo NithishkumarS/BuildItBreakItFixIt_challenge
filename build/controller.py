@@ -132,24 +132,25 @@ def main():
         s.bind((host_ip, PORT))
         s.listen()
         print('listening')
-
-        while True:
-            conn, addr = s.accept()
-            conn.settimeout(30.0)
-            with conn:
-                print('Connected by', addr)
-                start = time.time()
-                _input = conn.recv(4096)
-                print('input',_input)
-                if _input:
-                    obj.get_input(_input)
-                    output = obj.generate_ouput(obj).encode()
-                else:
-                    output ="{\"status\":\"FAILED\"}\n"
-                conn.sendall(output)
-
+        try:
+            while True:
+                conn, addr = s.accept()
+                conn.settimeout(30.0)
+                with conn:
+                    print('Connected by', addr)
+                    start = time.time()
+                    _input = conn.recv(4096)
+                    print('input',_input)
+                    if _input:
+                        obj.get_input(_input)
+                        output = obj.generate_ouput(obj).encode()
+                    else:
+                        output ="{\"status\":\"FAILED\"}\n"
+                    conn.sendall(output)
+        except socket.timeout:
+            print('Socket timed out')
         print('connection terminated')
-    print('end')
+
 
 
 if __name__ == "__main__":
