@@ -1,0 +1,4 @@
+Program freezes unexpectedly when an empty program file is sent to the target. Ideally this should be closed and the next program if any should be allowed to execute. 
+In this case, admin creates a new principal bob. second program is just an empty text. After this, in the third program bob tries to access the variable, the server's availability is comprimised since it is already crashed.
+
+
