@@ -1,0 +1,25 @@
+Description of issue in target’s program:
+
+Program hangs infinitely, for any input. Simple example test case has been used.
+
+
+How was the break found:
+
+No program produces any result
+
+
+Is it a fixed version of a failed break:
+
+No.
+
+
+How hard was the break to find:
+
+1.
+
+
+How hard was the break to exploit:
+
+1.
+
+
