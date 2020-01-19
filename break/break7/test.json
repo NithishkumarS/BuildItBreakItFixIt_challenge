@@ -1,0 +1,19 @@
+{
+"type": "Availability",
+"target_team": 16,
+"arguments": {
+"argv": ["%PORT%","password"],
+"base64": false
+},
+"programs": [
+{"program": "as principal admin password \"admin\" do\ncreate principal bob \"bob\"\nset x = 1\nset delegation x admin read -> bob\ndelete delegation x bob read -> admin\nreturn 0\n***", "base64": false}
+],
+"config": {
+"sensors": {
+"temperature":"80"
+},
+"output_devices": {
+"lights":"0"
+}
+}
+}
