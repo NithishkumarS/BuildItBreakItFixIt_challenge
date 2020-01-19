@@ -122,7 +122,7 @@ def sigterm_handler(signal, frame):
     sys.exit(0)
 
 signal.signal(signal.SIGTERM, sigterm_handler)
-
+import time
 def main():
     host_ip = "localhost"
     wait = True
@@ -132,14 +132,20 @@ def main():
         s.bind((host_ip, PORT))
         s.listen()
         print('listening')
+
         while True:
             conn, addr = s.accept()
+            conn.settimeout(30.0)
             with conn:
                 print('Connected by', addr)
+                start = time.time()
                 _input = conn.recv(4096)
+                print('input',_input)
                 if _input:
                     obj.get_input(_input)
                     output = obj.generate_ouput(obj).encode()
+                else:
+                    output ="{\"status\":\"FAILED\"}\n"
                 conn.sendall(output)
 
         print('connection terminated')
