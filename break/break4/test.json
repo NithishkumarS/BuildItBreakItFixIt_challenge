@@ -1,0 +1,21 @@
+{
+"type": "crash",
+"target_team": 19,
+"arguments": {
+"argv": ["%PORT%","password"],
+"base64": false
+},
+"programs": [
+{"program": "as principal admin password \"admin\" do\ncreate principal bob \"bob\"\nreturn 0\n***", "base64": false},    
+{"program": "", "base64": false},
+{"program": "as principal bob password \"bob\" do\nreturn 1\n***\n"}
+],
+"config": {
+"sensors": {
+"temperature":"80"
+},
+"output_devices": {
+"lights":"0"
+}
+}
+}
